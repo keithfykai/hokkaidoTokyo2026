@@ -268,7 +268,8 @@ h1 {
 
 .overview {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  transform: translateY(-34px);
+  margin-top: 44px;
+  transform: none;
 }
 
 .overview article {
@@ -318,9 +319,18 @@ h1 {
   margin: 0 0 22px;
   padding: 6px;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.52);
+  cursor: grab;
+  user-select: none;
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
+}
+
+.day-tabs.is-dragging {
+  cursor: grabbing;
 }
 
 .day-tabs button {
@@ -333,6 +343,7 @@ h1 {
   font: inherit;
   font-weight: 800;
   cursor: pointer;
+  user-select: none;
 }
 
 .day-tabs button.active {
@@ -506,6 +517,9 @@ h1 {
 }
 
 .map-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   flex: 0 0 auto;
   border-radius: 999px;
   padding: 11px 14px;
@@ -515,6 +529,12 @@ h1 {
   font-weight: 900;
   text-decoration: none;
   box-shadow: 0 12px 28px rgba(35, 110, 128, 0.22);
+}
+
+.map-button__icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
 }
 
 .pokemon-day-section {
@@ -824,7 +844,8 @@ h1 {
   }
 
   .map-button {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
     margin-top: 14px;
   }
 

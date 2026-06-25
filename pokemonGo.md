@@ -172,6 +172,13 @@ Tapu Lele
 Tapu Bulu
 Tapu Fini
 
+13 - 20th July: Special Anniversary Pikachu Celebration Event
+Featuring:
+Dapper Pikachu (3 Teams)
+Safari Hat Pikachu
+Varsity Hat Pikachu
+Amethyst Crown Pikachu
+World Championships Pikachu (2022, 2023, 2024)
 
 18th July: Super Mega Raid Day, Mega Raichu X and Y
 

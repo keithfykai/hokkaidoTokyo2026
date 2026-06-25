@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type UIEvent as ReactUIEvent } from "react";
 import type { ItineraryDay, ItineraryStop } from "@/data/itinerary";
 import { getPokemonEventsForDate } from "@/data/pokemonGoEvents";
 import { getStartDateInTokyo, getTripPhase } from "@/lib/tripDates";
@@ -68,12 +68,66 @@ const stopIcon = (kind: ItineraryStop["kind"]) => {
   }
 };
 
+const getTravelTip = (day: ItineraryDay) => {
+  switch (day.day) {
+    case 1:
+      return "After landing, use Daimaru Sapporo as your first easy reset: it is a good place to stock up on road-trip snacks, outdoor gear, and anything you forgot to pack.";
+    case 2:
+      return "Asahikawa is all about timing the ramen and sake stops around the drive, so plan to keep the afternoon flexible for the brewery museum and a relaxed AEON Mall finish.";
+    case 3:
+      return "Farm Tomita and the Blue Pond are the headline stops here, but the real win is ending with Furano yakiniku after you have had time to breathe in the lavender season.";
+    case 4:
+      return "Give yourself a little extra daylight for Hell Valley, then settle into Noboribetsu with coffee and a slow wander so the onsen town feels like part of the trip, not just a sleep stop.";
+    case 5:
+      return "Lake Toya is the best place to break up the long drive south, and Lake Hill Farm is a smart dessert stop before you roll into Hakodate for the evening.";
+    case 6:
+      return "Use Goryokaku and the red brick warehouses as your daytime anchor, then save Mount Hakodate for clear evening light so the city view feels worth the climb.";
+    case 7:
+      return "This is a big road day, so treat Otaru Canal as the reward: ramen at lunch, then shopping and an evening walk once you have checked in and recovered from the drive.";
+    case 8:
+      return "Sapporo works best as a snack-and-shopping circuit, so pace the matcha, ramen street, and Tanukikoji stops around the car return and keep late ramen as an optional bonus.";
+    case 9:
+      return "Odori Park makes a calm start, but the useful tip is to keep room for Sapporo Beer Museum and Book Off browsing so the day still feels local after the ramen stop.";
+    case 10:
+      return "On arrival in Tokyo, keep Ikebukuro simple: check in, explore the station area, and make the Pokémon Store your first real neighborhood stop after the flight.";
+    case 11:
+      return "Gotemba Premium Outlets is the main outing, so plan the Ginza evening as a softer end to the day with Montbell and dinner after the bus ride back.";
+    case 12:
+      return "Asakusa and Kappabashi are strongest when you linger, because the temple streets and kitchenware shops are the best places to shop slowly before Shinjuku.";
+    case 13:
+      return "Omotesando to Shibuya is a good walking day, and Cat Street works best if you leave enough energy for browsing around Miyashita Park before dinner.";
+    case 14:
+      return "Kamakura is the day to keep plans loose and enjoy the company trip vibe; the best move is to focus on the day trip itself instead of overpacking the schedule.";
+    case 15:
+      return "Leave a cushion for checkout and the airport bus, because the cleanest departure day is the one where breakfast, luggage, and transit all stay calm and unhurried.";
+    default:
+      return day.summary;
+  }
+};
+
+function DirectionsIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="map-button__icon">
+      <path fill="#34a853" d="M8.5 3 3 6.2v13.9L8.5 17V3Z" />
+      <path fill="#4285f4" d="M15.5 6.1 8.5 3v14l7 3.1v-14Z" />
+      <path fill="#fbbc04" d="m21 7.8-5.5-2.9v14L21 21V7.8Z" />
+      <path fill="#ea4335" d="M12 6.2a4.3 4.3 0 0 0-4.3 4.3c0 3.2 4.3 8.8 4.3 8.8s4.3-5.6 4.3-8.8A4.3 4.3 0 0 0 12 6.2Zm0 6.3a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z" />
+    </svg>
+  );
+}
+
 export function TripExperience({ days, stats }: TripExperienceProps) {
   const carouselRef = useRef<HTMLDivElement>(null);
+  const dayTabsRef = useRef<HTMLElement>(null);
   const hasSetInitialDay = useRef(false);
+  const isDraggingTabsRef = useRef(false);
+  const didDragTabsRef = useRef(false);
+  const dragStartXRef = useRef(0);
+  const dragStartScrollLeftRef = useRef(0);
   const [mounted, setMounted] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [countdown, setCountdown] = useState<Countdown | null>(null);
+  const [isDayTabsDragging, setIsDayTabsDragging] = useState(false);
 
   const phase = useMemo(() => {
     if (!mounted) {
@@ -127,7 +181,73 @@ export function TripExperience({ days, stats }: TripExperienceProps) {
     });
   };
 
-  const handleCarouselScroll = (event: React.UIEvent<HTMLDivElement>) => {
+  const handleDayTabsPointerDown = (event: ReactPointerEvent<HTMLElement>) => {
+    if (event.button !== 0) {
+      return;
+    }
+
+    const tabs = dayTabsRef.current;
+
+    if (!tabs) {
+      return;
+    }
+
+    didDragTabsRef.current = false;
+    isDraggingTabsRef.current = false;
+    dragStartXRef.current = event.clientX;
+    dragStartScrollLeftRef.current = tabs.scrollLeft;
+  };
+
+  const handleDayTabsPointerMove = (event: ReactPointerEvent<HTMLElement>) => {
+    if (event.buttons === 0) {
+      return;
+    }
+
+    const tabs = dayTabsRef.current;
+
+    if (!tabs) {
+      return;
+    }
+
+    const deltaX = event.clientX - dragStartXRef.current;
+
+    if (!isDraggingTabsRef.current && Math.abs(deltaX) > 8) {
+      isDraggingTabsRef.current = true;
+      didDragTabsRef.current = true;
+      setIsDayTabsDragging(true);
+      tabs.setPointerCapture(event.pointerId);
+    }
+
+    if (!isDraggingTabsRef.current) {
+      return;
+    }
+
+    tabs.scrollLeft = dragStartScrollLeftRef.current - deltaX;
+    event.preventDefault();
+  };
+
+  const finishDayTabsDrag = (event: ReactPointerEvent<HTMLElement>) => {
+    const tabs = dayTabsRef.current;
+
+    if (tabs && tabs.hasPointerCapture(event.pointerId)) {
+      tabs.releasePointerCapture(event.pointerId);
+    }
+
+    isDraggingTabsRef.current = false;
+    setIsDayTabsDragging(false);
+  };
+
+  const handleDayTabsClickCapture = (event: ReactPointerEvent<HTMLElement>) => {
+    if (!didDragTabsRef.current) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    didDragTabsRef.current = false;
+  };
+
+  const handleCarouselScroll = (event: ReactUIEvent<HTMLDivElement>) => {
     const target = event.currentTarget;
     const styles = window.getComputedStyle(target);
     const gap = Number.parseFloat(styles.columnGap || "0");
@@ -181,7 +301,7 @@ export function TripExperience({ days, stats }: TripExperienceProps) {
           <div className="hero__stats" aria-label="Trip summary">
             <Stat label="Dates" value={`${formatDisplayDate(stats.startDate)} – ${formatDisplayDate(stats.endDate)}`} />
             <Stat label="Hokkaido" value={`${hokkaidoDays} days`} />
-            <Stat label="Tokyo" value={`${tokyoDays} transfer day`} />
+            <Stat label="Tokyo" value={`${tokyoDays} days`} />
           </div>
         </div>
       </section>
@@ -195,7 +315,7 @@ export function TripExperience({ days, stats }: TripExperienceProps) {
         <article>
           <span>02</span>
           <h2>Tokyo Experience</h2>
-          <p>A polished placeholder for the Tokyo chapter, ready for the next itinerary draft.</p>
+          <p>Ikebukuro base days for outlets, Ginza, Asakusa, Shinjuku, Shibuya, and Kamakura.</p>
         </article>
       </section>
 
@@ -205,7 +325,16 @@ export function TripExperience({ days, stats }: TripExperienceProps) {
           {/* <h2>{phase.phase === "before" ? "Preview the full route" : "Swipe through the trip"}</h2> */}
         </div>
 
-        <nav className="day-tabs" aria-label="Choose itinerary day">
+        <nav
+          ref={dayTabsRef}
+          className={`day-tabs${isDayTabsDragging ? " is-dragging" : ""}`}
+          aria-label="Choose itinerary day"
+          onClickCapture={handleDayTabsClickCapture}
+          onPointerDown={handleDayTabsPointerDown}
+          onPointerMove={handleDayTabsPointerMove}
+          onPointerUp={finishDayTabsDrag}
+          onPointerCancel={finishDayTabsDrag}
+        >
           {days.map((day, index) => (
             <button
               key={day.date}
@@ -251,13 +380,10 @@ export function TripExperience({ days, stats }: TripExperienceProps) {
                 </div>
               )}
 
-              {day.region === "Tokyo" && (
-                <div className="tokyo-placeholder">
-                  <span>Tokyo chapter</span>
-                  Add Shibuya nights, cafes, shopping, and food pilgrimages here when the plan
-                  gets deliciously specific.
-                </div>
-              )}
+              <div className="tokyo-placeholder">
+                <span>Travel tip</span>
+                {getTravelTip(day)}
+              </div>
 
               <ol className="timeline">
                 {day.stops.map((stop) => (
@@ -271,7 +397,8 @@ export function TripExperience({ days, stats }: TripExperienceProps) {
                       </div>
                       {stop.mapUrl && (
                         <a href={stop.mapUrl} target="_blank" rel="noreferrer" className="map-button">
-                          Open Maps
+                          <DirectionsIcon />
+                          <span>Directions</span>
                         </a>
                       )}
                     </div>
