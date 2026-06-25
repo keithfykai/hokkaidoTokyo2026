@@ -1,8 +1,12 @@
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ItineraryDay, ItineraryStop } from "@/data/itinerary";
+import { getPokemonEventsForDate } from "@/data/pokemonGoEvents";
 import { getStartDateInTokyo, getTripPhase } from "@/lib/tripDates";
+import { PokemonEventCards } from "./PokemonEventCards";
 
 type TripStats = {
   startDate: string;
@@ -147,7 +151,12 @@ export function TripExperience({ days, stats }: TripExperienceProps) {
         <div className="hero__glow hero__glow--right" />
         <div className="hero__content">
           <p className="eyebrow">{stats.heroEyebrow}</p>
-          <h1>{stats.heroTitle}</h1>
+          <div className="hero-title-row">
+            <h1>{stats.heroTitle}</h1>
+            <Link href="/pokemongoevents" className="pokeball-link" aria-label="View Pokémon Go events calendar">
+              <Image src="/pokeball.svg" alt="" width={72} height={72} />
+            </Link>
+          </div>
           <p className="hero__lede">
             Travel dashboard for the upcoming trip.
           </p>
@@ -269,6 +278,20 @@ export function TripExperience({ days, stats }: TripExperienceProps) {
                   </li>
                 ))}
               </ol>
+
+              <section className="pokemon-day-section" aria-label={`Pokemon Go events for day ${day.day}`}>
+                <div className="pokemon-section-heading">
+                  <span className="pokemon-divider" />
+                  <div>
+                    <Image src="/pokeball.svg" alt="" width={38} height={38} />
+                    <h4>Pokemon Go</h4>
+                  </div>
+                </div>
+                <PokemonEventCards
+                  events={getPokemonEventsForDate(day.date)}
+                  emptyMessage="No Pokémon Go events from the attached schedule overlap this itinerary day."
+                />
+              </section>
             </article>
           ))}
         </div>
