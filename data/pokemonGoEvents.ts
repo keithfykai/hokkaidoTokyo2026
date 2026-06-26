@@ -315,7 +315,7 @@ export const pokemonGoEvents: PokemonGoEvent[] = [
     endDate: "2026-07-26",
     category: "Raid",
     summary: "Mega Rayquaza weekend, obtain Meteorite and Rayquaza through special research.",
-    details: ["High-value Dragon/Flying Mega raid weekend"],
+    details: ["High-value Dragon/Flying Mega weekend"],
     pokemon: [{ name: "Rayquaza", pokedexId: 384, detail: "Mega raid", priority: "High" }],
   },
 ];
